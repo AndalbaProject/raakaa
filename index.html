@@ -489,13 +489,14 @@
       left: 50%;
       border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 50%;
-      transform: translate(-50%, -50%) rotateX(72deg);
       pointer-events: none;
     }
 
     .hub-orbit-1 {
       width: min(72vw, 620px);
       height: min(72vw, 620px);
+      transform: translate(-50%, -50%) rotateX(72deg);
+      animation: orbitSpin1 25s linear infinite;
     }
 
     .hub-orbit-2 {
@@ -503,6 +504,17 @@
       height: min(54vw, 460px);
       border-style: dashed;
       border-color: rgba(255, 255, 255, 0.12);
+      transform: translate(-50%, -50%) rotateX(72deg);
+      animation: orbitSpin2 35s linear infinite reverse;
+    }
+
+    @keyframes orbitSpin1 {
+      from { transform: translate(-50%, -50%) rotateX(72deg) rotateZ(0deg); }
+      to { transform: translate(-50%, -50%) rotateX(72deg) rotateZ(360deg); }
+    }
+    @keyframes orbitSpin2 {
+      from { transform: translate(-50%, -50%) rotateX(72deg) rotateZ(0deg); }
+      to { transform: translate(-50%, -50%) rotateX(72deg) rotateZ(360deg); }
     }
 
     .hub-heart {
@@ -537,28 +549,14 @@
 
     .hub-icon {
       position: absolute;
-      top: 50%;
-      left: 50%;
       z-index: 4;
-      transform: translate(-50%, -50%);
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 7px;
       cursor: pointer;
-      animation: hubFloat 5s ease-in-out infinite;
-    }
-
-    @keyframes hubFloat {
-
-      0%,
-      100% {
-        margin-top: 0;
-      }
-
-      50% {
-        margin-top: -10px;
-      }
+      transition: filter 0.2s ease;
+      will-change: transform;
     }
 
     .hub-icon .ic-tile {
@@ -590,6 +588,19 @@
 
     .hub-icon.tile-pink .ic-tile {
       background: linear-gradient(135deg, #f3b9bf, #e891a3);
+    }
+
+    .hub-icon .ic-tile-photo {
+      padding: 0;
+      overflow: hidden;
+      border-radius: 50%;
+    }
+
+    .hub-icon .ic-tile-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .hub-icon .ic-label {
@@ -1167,9 +1178,9 @@ tetap jadi kamu yang aku kenal yaa, yang baik, yang tulus, yang kadang nyebelin 
         "⭐ Semoga harimu selalu bahagia."
       ],
       memories: [
-        { img: "fotober2.jpeg", text: "Hari pertama kita bertemu, tak pernah aku duga ini akan berarti sebesar ini." },
-        { img: "fotodia.jpg", text: "Setiap tawa kecilmu, selalu jadi favoritku." },
-        { img: "fotodia2.jpg", text: "Bersamamu, hari biasa terasa seperti hari paling spesial." }
+        { img: "fotober2.jpeg", text: "Setiap momen bareng kamu, selalu jadi yang paling aku rinduin 💕" },
+        { img: "fotodia.jpg", text: "Senyum kamu tuh obat paling ampuh buat hari-hari beratku ✨" },
+        { img: "fotodia2.jpg", text: "Bersamamu, waktu terasa berhenti dan dunia cuma milik kita berdua 🌙" }
       ],
       aboutYou: [
         "you are kind to everyone ❤️",
@@ -1183,10 +1194,10 @@ tetap jadi kamu yang aku kenal yaa, yang baik, yang tulus, yang kadang nyebelin 
       ],
       hubIcons: [
         { label: "Bouquet", icon: "💐", style: "", action: "bouquet" },
-        { label: "Foto 1", icon: "🖼️", style: "tile-dark", action: "memory", index: 0 },
-        { label: "Foto 2", icon: "🖼️", style: "tile-dark", action: "memory", index: 1 },
+        { label: "Foto 1", icon: "", img: "fotober2.jpeg", style: "tile-dark", action: "memory", index: 0 },
+        { label: "Foto 2", icon: "", img: "fotodia.jpg", style: "tile-dark", action: "memory", index: 1 },
         { label: "Surat", icon: "📄", style: "", action: "letter" },
-        { label: "Foto 3", icon: "🖼️", style: "tile-dark", action: "memory", index: 2 }
+        { label: "Foto 3", icon: "", img: "fotodia2.jpg", style: "tile-dark", action: "memory", index: 2 }
       ]
     };
 
@@ -1783,22 +1794,66 @@ tetap jadi kamu yang aku kenal yaa, yang baik, yang tulus, yang kadang nyebelin 
       const stage = document.getElementById("hub-stage");
       const items = CONFIG.hubIcons;
       const n = items.length;
-      // place icons around an ellipse matching the orbit
-      const rx = Math.min(window.innerWidth * 0.33, 300);
-      const ry = Math.min(window.innerWidth * 0.20, 175);
+
+      // Orbit radii (elliptical)
+      const rx = Math.min(window.innerWidth * 0.34, 290);
+      const ry = Math.min(window.innerWidth * 0.14, 120);
+
+      const iconEls = [];
       items.forEach((item, i) => {
-        const angle = (i / n) * Math.PI * 2 - Math.PI / 2; // start at top
-        const x = Math.cos(angle) * rx;
-        const y = Math.sin(angle) * ry;
         const el = document.createElement("div");
         el.className = "hub-icon " + (item.style || "");
-        el.style.marginLeft = x + "px";
-        el.style.marginTop = y + "px";
-        el.style.animationDelay = (i * 0.4) + "s";
-        el.innerHTML = `<div class="ic-tile">${item.icon}</div><div class="ic-label">${item.label}</div>`;
+
+        // Use photo thumbnail if img is provided, otherwise use emoji icon
+        let tileContent;
+        if (item.img) {
+          tileContent = `<div class="ic-tile ic-tile-photo"><img src="${item.img}" alt="${item.label}"></div>`;
+        } else {
+          tileContent = `<div class="ic-tile">${item.icon}</div>`;
+        }
+        el.innerHTML = `${tileContent}<div class="ic-label">${item.label}</div>`;
+
         el.addEventListener("click", () => onHubIconClick(item));
         stage.appendChild(el);
+        iconEls.push({ el, baseAngle: (i / n) * Math.PI * 2 });
       });
+
+      // Animate orbit
+      const speed = 0.0004; // radians per ms
+      let lastTime = performance.now();
+      let globalAngle = 0;
+
+      function animateOrbit(now) {
+        const dt = now - lastTime;
+        lastTime = now;
+        globalAngle += speed * dt;
+
+        const stageRect = stage.getBoundingClientRect();
+        const cx = stageRect.width / 2;
+        const cy = stageRect.height / 2;
+
+        iconEls.forEach(icon => {
+          const angle = icon.baseAngle + globalAngle;
+          const x = Math.cos(angle) * rx;
+          const y = Math.sin(angle) * ry;
+
+          // Depth simulation: sin(angle) controls front/back
+          const depth = Math.sin(angle); // -1 (back) to 1 (front)
+          const scale = 0.7 + 0.3 * ((depth + 1) / 2); // 0.7 to 1.0
+          const zIdx = depth > 0 ? 6 : 2; // in front or behind heart
+
+          icon.el.style.left = (cx + x) + "px";
+          icon.el.style.top = (cy + y) + "px";
+          icon.el.style.transform = `translate(-50%, -50%) scale(${scale.toFixed(3)})`;
+          icon.el.style.zIndex = zIdx;
+          icon.el.style.opacity = (0.55 + 0.45 * ((depth + 1) / 2)).toFixed(3);
+        });
+
+        if (document.getElementById("page-universe").classList.contains("active")) {
+          requestAnimationFrame(animateOrbit);
+        }
+      }
+      requestAnimationFrame(animateOrbit);
     }
 
     function onHubIconClick(item) {
